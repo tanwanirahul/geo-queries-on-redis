@@ -4,7 +4,7 @@ Created on 02-Aug-2014
 @author: rahul
 '''
 from utils import get_geo_hash, get_distance_by_geohash,\
-    get_distance_by_lat_lon
+    get_distance_by_lat_lon, find_locations_in_radius
 
 
 class Location(object):
@@ -69,6 +69,17 @@ class Location(object):
 
         # Add the hash into the set as well.
         redis_conn.sadd(set_name, geohash)
+
+    @classmethod
+    def find_locations_in_radius(cls, redis_conn, lat, lon, radius):
+        '''
+            Given the lat, lon and radius in kms returns all the locations that
+            are in the given radius.
+        '''
+        # These are all the locations we have.
+        locations = redis_conn.smembers(cls.get_redis_key_location_set())
+        locs_in_radius = find_locations_in_radius(lat, lon, locations, radius)
+        return [cls.get_by_geohash_key(redis_conn, k) for k in locs_in_radius]
 
     @classmethod
     def get_distance_by_geohash(cls, start, end):
