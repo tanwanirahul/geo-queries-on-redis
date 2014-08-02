@@ -11,14 +11,16 @@ class Location(object):
     '''
     REDIS_KEY = "locations"
 
-    def __init__(self, redis_conn, lat, lon):  # @ReservedAssignment
+    def __init__(self, redis_conn, lat, lon, tag):  # @ReservedAssignment
         '''
             Initializes the given location parameters as well
             as the redis wrapper.
+            tag can be anything like coffee shop name etc.
         '''
         self.conn = redis_conn
         self.lat = lat
         self.lon = lon
+        self.tag = tag
 
     @classmethod
     def get_by_lat_lon(self, lat, lon):
