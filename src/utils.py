@@ -45,3 +45,31 @@ def get_distance_by_lat_lon(cls, start, end):
 
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
+
+
+def find_locations_in_radius(lat, lon, locations, radius):
+    '''
+        Given the lat lon, finds which among all locations are within the
+        required radius.
+    '''
+    loc_distance = find_distance_for_locations(lat, lon, locations)
+    return {k: v for k, v in loc_distance.items() if v <= radius}
+
+
+def find_distance_for_locations(lat, lon, locations):
+    '''
+        Given the lat lon, and locations, returns the distance
+        of each location from given lat lon.
+    '''
+    # starting coordinates for finding the distance.
+    start = (lat, lon)
+    location_distance = {}
+    # find distance for each locations.
+    for location in locations:
+        # end coordinates.
+        end = get_lat_lon_by_geohash(location)
+        # distance between start and end coordinates
+        distance = get_distance_by_lat_lon(start, end)
+        # update our hash table with distance.
+        location_distance.update({location: distance})
+    return location_distance
