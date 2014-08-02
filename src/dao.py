@@ -3,6 +3,8 @@ Created on 02-Aug-2014
 
 @author: rahul
 '''
+from utils import get_geo_hash, get_distance_by_geohash,\
+    get_distance_by_lat_lon
 
 
 class Location(object):
@@ -10,35 +12,63 @@ class Location(object):
         Represents all the operations performed on location entity.
     '''
     REDIS_KEY = "locations"
+    UNIQUE_KEYS_SET = "locations:set"
+    KEYS_TO_SAVE = ["lat", "lon", "tag"]
 
-    def __init__(self, redis_conn, lat, lon, tag):  # @ReservedAssignment
+    def __init__(self, lat, lon, tag):  # @ReservedAssignment
         '''
-            Initializes the given location parameters as well
-            as the redis wrapper.
+            Initializes the given location parameters.
             tag can be anything like coffee shop name etc.
         '''
-        self.conn = redis_conn
         self.lat = lat
         self.lon = lon
         self.tag = tag
 
     @classmethod
-    def get_by_lat_lon(self, lat, lon):
+    def get_by_lat_lon(cls, redis_conn, lat, lon):
         '''
+            Given the lat and long returns the Location instance.
         '''
-        pass
+        # find geo hash value form lat and lon.
+        geo_hash = cls.get_hash_by_lat_lon(lat, lon)
+        # delegate further processing to get_by_geohash.
+        return cls.get_by_geohash_key(redis_conn, geo_hash)
 
     @classmethod
-    def get_by_geohash_key(cls, geo_key):
+    def get_by_geohash_key(cls, redis_conn, geo_key):
         '''
+            Returns the mapping based on
         '''
-        pass
+        # find the key name based on hash value.
+        loc_key_name = cls.get_hashed_key_by_geokey(geo_key)
+        # find all the fields form this mapping
+        values = redis_conn.hmget(loc_key_name, *cls.KEYS_TO_SAVE)
+        # return the location object.
+        return Location(**dict(zip(cls.KEYS_TO_SAVE, values)))
 
-    def save(self):
+    def save(self, redis_conn):
         '''
             Save this instance into redis.
+            Two data structures are being used here.
+            1. Map - to store all the locations information.
+            2. Set - to store the Ids of all the locations.
         '''
-        pass
+
+        # Hashed value based on lat and lon.
+        geohash = self.get_hash()
+
+        # Name of the hash.
+        loc_name = self.get_hashed_key()
+
+        # Name of the set containing unique locations hash.
+        set_name = self.get_redis_key_location_set()
+
+        # Prepare the data that needs to be saved into hash.
+        data = {k: self.__dict__.get(k) for k in self.KEYS_TO_SAVE}
+        redis_conn.hmset(loc_name, data)
+
+        # Add the hash into the set as well.
+        redis_conn.sadd(set_name, geohash)
 
     @classmethod
     def get_distance_by_geohash(cls, start, end):
@@ -46,7 +76,7 @@ class Location(object):
             Returns the distance between two locations.
             both start and end are expected to be geo hashed keys.
         '''
-        pass
+        return get_distance_by_geohash(start, end)
 
     @classmethod
     def get_distance_by_lat_lon(cls, start, end):
@@ -54,10 +84,10 @@ class Location(object):
             Returns the distance between two locations.
             both start and end are expected to be dicts with lat and lon keys.
         '''
-        pass
+        return get_distance_by_lat_lon(start, end)
 
     @classmethod
-    def get_redis_key(cls):
+    def get_redis_key_location_collection(cls):
         '''
             Returns the redis key for this entity.
         '''
@@ -65,15 +95,45 @@ class Location(object):
         # the class name, we don't want to get into migration stuff.
         return cls.REDIS_KEY
 
+    @classmethod
+    def get_redis_key_location_set(cls):
+        '''
+            Returns the redis key for this entity.
+        '''
+        # we could keep this with same name as class but if we later change
+        # the class name, we don't want to get into migration stuff.
+        return cls.UNIQUE_KEYS_SET
+
     def get_hash(self):
         '''
-            Returns the geo hash for this instance.
+            Return the hash for this object.
         '''
-        pass
+        get_geo_hash(self.lat, self.lon)
 
     @classmethod
-    def get_hash_for_lat_lon(cls, lat, lon):
+    def get_hash_by_lat_lon(cls, lat, lon):
         '''
-            Returns the geo hash for the given latitude and longitude.
+            Return the hash for this object.
         '''
-        pass
+        get_geo_hash(lat, lon)
+
+    def get_hashed_key(self):
+        '''
+            Returns the geo hashed key for this instance.
+        '''
+        return self.get_hashed_key_by_geokey(self.get_hash())
+
+    @classmethod
+    def get_hashed_key_by_lat_lon(cls, lat, lon):
+        '''
+            Returns the geo hashed key for this instance.
+        '''
+        return cls.get_hashed_key_by_geokey(
+            cls.get_hash_by_lat_lon(lat, long))
+
+    @classmethod
+    def get_hashed_key_by_geokey(cls, key):
+        '''
+            Given the geo hash key, returns the hash for this object.
+        '''
+        return "{0}:{1}".format(cls.get_redis_key_location_collection(), key)
