@@ -4,7 +4,7 @@ Created on 03-Aug-2014
 @author: rahul
 '''
 from redis.client import Redis
-from exceptions import ImproperlyConfigured
+from cexceptions import ImproperlyConfigured
 
 CONF = {
     "default": {
