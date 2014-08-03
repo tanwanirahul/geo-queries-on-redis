@@ -18,7 +18,7 @@ def get_lat_lon_by_geohash(geohash):
     '''
         Returns the tuple with lat and lon elements.
     '''
-    return hasher.decode(geohash)
+    return hasher.decode(long(geohash))
 
 
 def get_distance_by_geohash(cls, start, end):
@@ -31,7 +31,7 @@ def get_distance_by_geohash(cls, start, end):
     return get_distance_by_lat_lon(start_cords, end_cords)
 
 
-def get_distance_by_lat_lon(cls, start, end):
+def get_distance_by_lat_lon(start, end):
     '''
         Returns the distance between two locations.
         both start and end are expected to be tuples with lat and lon elements.
