@@ -54,3 +54,4 @@ How to use?
     
     This should give us first location which has distance of around 1 Km.
 
+   The q option is for querying. Required parameters for this options are the starting latitude and longitude and      the radius.
