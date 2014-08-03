@@ -79,7 +79,8 @@ class Location(object):
         # These are all the locations we have.
         locations = redis_conn.smembers(cls.get_redis_key_location_set())
         locs_in_radius = find_locations_in_radius(lat, lon, locations, radius)
-        return [cls.get_by_geohash_key(redis_conn, k) for k in locs_in_radius]
+        return [(cls.get_by_geohash_key(redis_conn, k), v)
+                for k, v in locs_in_radius.items()]
 
     @classmethod
     def get_distance_by_geohash(cls, start, end):
@@ -119,7 +120,7 @@ class Location(object):
         '''
             Return the hash for this object.
         '''
-        get_geo_hash(self.lat, self.lon)
+        return get_geo_hash(self.lat, self.lon)
 
     @classmethod
     def get_hash_by_lat_lon(cls, lat, lon):
@@ -148,3 +149,9 @@ class Location(object):
             Given the geo hash key, returns the hash for this object.
         '''
         return "{0}:{1}".format(cls.get_redis_key_location_collection(), key)
+
+    def __str__(self, *args, **kwargs):
+        '''
+            Represent this object in string format.
+        '''
+        return "{0}:{1} - {2}".format(self.lat, self.lon, self.tag)
