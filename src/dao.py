@@ -125,9 +125,9 @@ class Location(object):
     @classmethod
     def get_hash_by_lat_lon(cls, lat, lon):
         '''
-            Return the hash for this object.
+            Return the hash for the give lat lon.
         '''
-        get_geo_hash(lat, lon)
+        return get_geo_hash(lat, lon)
 
     def get_hashed_key(self):
         '''
